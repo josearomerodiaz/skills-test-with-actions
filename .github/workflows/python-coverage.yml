@@ -1,0 +1,114 @@
+# Nombre que veremos para este workflow
+# dentro de la pestaña Actions de GitHub.
+name: Python Coverage
+
+# Define cuándo queremos ejecutar el workflow.
+on:
+
+  # Se ejecutará con eventos de Pull Request.
+  pull_request:
+
+    # Únicamente cuando la PR tenga main como destino.
+    branches:
+      - main
+
+# Permisos que tendrá el workflow.
+permissions:
+
+  # Necesitamos poder escribir sobre la Pull Request
+  # porque después publicaremos un comentario con la cobertura.
+  pull-requests: write
+
+
+# Trabajos que ejecutará nuestro workflow.
+jobs:
+
+  # Identificador de nuestro job.
+  python-coverage:
+
+    # GitHub proporcionará una máquina Ubuntu
+    # donde ejecutar todo el proceso.
+    runs-on: ubuntu-latest
+
+    # Pasos que realizará el job, secuencialmente.
+    steps:
+
+      # PASO 1:
+      # Descarga el contenido del repositorio dentro
+      # del runner Ubuntu.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      # PASO 2:
+      # Prepara Python dentro del runner.
+      - name: Set up Python
+
+        # Utilizamos una Action preparada por GitHub
+        # para instalar/configurar Python.
+        uses: actions/setup-python@v4
+
+        # Parámetros que pasamos a la Action anterior.
+        with:
+
+          # Versión de Python que utilizará nuestro workflow.
+          python-version: 3.13
+
+
+      # PASO 3:
+      # Instala las dependencias necesarias.
+      - name: Install dependencies
+
+        # "|" permite ejecutar varios comandos consecutivos.
+        run: |
+
+          # Instala las dependencias del proyecto.
+          pip install -r requirements.txt
+
+          # Instala pytest para ejecutar los tests.
+          pip install pytest==8.4.1
+
+          # Instala la herramienta de cobertura.
+          pip install coverage==7.9
+
+          # Plugin que integra coverage con pytest.
+          pip install pytest-cov==6.2.1
+
+
+      # PASO 4:
+      # Ejecuta los tests y calcula cuánto código
+      # de src/ está cubierto.
+      - name: Run tests and generate coverage details
+        run: pytest --cov=src
+
+
+      # PASO 5:
+      # Publica el resultado de cobertura directamente
+      # como comentario dentro de la Pull Request.
+      - name: Coverage comment
+
+        # En lugar de escribir nosotros el código,
+        # reutilizamos una Action ya existente.
+        uses: py-cov-action/python-coverage-comment-action@v3
+
+        with:
+
+          # Token proporcionado por GitHub para que
+          # la Action pueda interactuar con la PR.
+          GITHUB_TOKEN: ${{ github.token }}
+
+          # A partir de 90% considerará la cobertura "verde".
+          MINIMUM_GREEN: 90
+
+          # A partir de 70% la considerará "naranja".
+          MINIMUM_ORANGE: 70
+
+
+      # PASO 6:
+      # Además de informar de la cobertura,
+      # queremos que el workflow falle si es inferior al 90%.
+      - name: Fail if below threshold
+
+        # coverage report genera el informe.
+        # --fail-under=90 devuelve error si coverage < 90%.
+        run: coverage report --fail-under=90
