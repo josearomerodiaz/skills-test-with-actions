@@ -68,3 +68,39 @@ def test_get_nth_fibonacci_ten():
 
      # Assert
      assert result == 55
+
+
+# Comprueba qué ocurre cuando alguien intenta calcular
+# el área de un círculo utilizando un radio negativo.
+def test_area_of_circle_negative_radius():
+
+    """Test with a negative radius to raise ValueError."""
+
+    # ARRANGE:
+    # Preparamos una entrada inválida.
+    radius = -1
+
+    # ACT & ASSERT:
+    # Esperamos explícitamente que llamar a la función
+    # con un radio negativo provoque ValueError.
+    #
+    # Si NO se produce ValueError, el test fallará.
+    with pytest.raises(ValueError):
+        area_of_circle(radius)
+
+
+# Comprueba el comportamiento de Fibonacci
+# cuando recibe una posición negativa.
+def test_get_nth_fibonacci_negative():
+
+    """Test with a negative number to raise ValueError."""
+
+    # ARRANGE:
+    # Preparamos deliberadamente una entrada inválida.
+    n = -1
+
+    # ACT & ASSERT:
+    # Esperamos que la función rechace el valor negativo
+    # lanzando ValueError.
+    with pytest.raises(ValueError):
+        get_nth_fibonacci(n)
